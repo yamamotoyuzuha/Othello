@@ -1,13 +1,10 @@
 
-namespace InGame.Board
+/// <summary>
+/// オセロの石の種類
+/// </summary>
+public enum ColorType
 {
-    /// <summary>
-    /// オセロの石の種類
-    /// </summary>
-    public enum ColorType
-    {
-        None,
-        Black,
-        White
-    }
+    None,
+    Black,
+    White
 }
