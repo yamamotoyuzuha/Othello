@@ -1,8 +1,8 @@
 
 /// <summary>
-/// オセロの石の種類
+/// 石の色
 /// </summary>
-public enum ColorType
+public enum StoneColor
 {
     None,
     Black,
