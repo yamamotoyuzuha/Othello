@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEditor.XR;
 using UnityEngine;
 
 /// <summary>
@@ -30,6 +31,11 @@ public class BoardManager : MonoBehaviour
     /// 各マス目の情報
     /// </summary>
     private MassData[,] _massData;
+    /// <summary>
+    /// 置ける位置を保持
+    /// ・手番が切り替わるごとにクリアを行う
+    /// </summary>
+    private List<CanPutBoardPositions> _canPutBoardPositions = new List<CanPutBoardPositions>();
     
     // 周辺8マスの移動方向
     private readonly int[,] _surroundings =
@@ -42,8 +48,6 @@ public class BoardManager : MonoBehaviour
     private readonly int _columns = 8;
     
     
-    // TODO：置く処理（めくる）
-    // TODO：手番
     // TODO：持ち時間
     // TODO：AIの実装
     
@@ -57,7 +61,7 @@ public class BoardManager : MonoBehaviour
         BoardInitialization();
         StoneInitialization();
         
-        CanPutBoard();
+        CanPutBoardUpdate();
     }
 
     /// <summary>
@@ -110,7 +114,7 @@ public class BoardManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 指定された座標に石を生成する
+    /// 指定された位置に石を生成する
     /// </summary>
     /// <param name="row">行</param>
     /// <param name="column">列</param>
@@ -142,7 +146,23 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定された座標のマスの色を選択中に変更する
+    /// 指定された位置が置けるかどうかを返す
+    /// </summary>
+    /// <param name="row">行</param>
+    /// <param name="column">列</param>
+    /// <returns>true：置ける　false：置けない</returns>
+    private bool IsCanPutPosition(int row, int column)
+    {
+        foreach (var canPut in _canPutBoardPositions)
+        {
+            if (canPut.PutPosition.row == row && canPut.PutPosition.column == column) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// 指定された位置のマスの色を選択中に変更する
     /// </summary>
     /// <param name="currentRow"></param>
     /// <param name="currentColumn"></param>
@@ -152,94 +172,140 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 指定された座標のマスの色を元に戻す
+    /// 指定された位置のマスの色を元に戻す
     /// </summary>
     /// <param name="row"></param>
     /// <param name="column"></param>
     public void DeselectBoardColor(int row, int column)
     {
-        var cunPut = CheckSurroundingStone(row, column, StoneColor.Black);
-        if (cunPut) // 置ける
-        {
-            _boardRenderers[row, column].material = _canPutMaterial;
-        }
-        else
-        {
-            _boardRenderers[row, column].material = _normalMaterial;
-        }
-    }
-
-    // TODO：置く処理を実装する
-    /// <summary>
-    /// 置く
-    /// </summary>
-    public void PutStone()
-    {
-        
+        // 置ける位置なのかを判定し、置ける位置なら色を置ける位置の色に変更
+        _boardRenderers[row, column].material = IsCanPutPosition(row, column) ? _canPutMaterial : _normalMaterial;
     }
     
     /// <summary>
-    /// 指定された石の色を置くことができるマス目を取得する
+    /// 石を置く
     /// </summary>
-    private void CanPutBoard()
+    /// <param name="row">置く石の行</param>
+    /// <param name="column">置く石の列</param>
+    public void PutStone(int row, int column)
     {
-        // 置くことが可能なマスを保持する
-        List<MassData> emptyList = new List<MassData>();
+        // 現在の手番で置けない場合、処理をしない
+        if(!IsCanPutPosition(row, column)) return;
+
+        // 盤面の石の色を現在の手番の石の色に変更
+        _massData[row, column].StoneColor = _gameTurnManager.CurrentTurnStoneColor;
+        
+        // 石の生成を行う
+        var stone = Instantiate(_stonePrefab, _stoneParent);
+        _stones[row, column] = stone;
+        // 石の位置設定
+        var pos = _stoneTransforms[row]._transforms[column].position;
+        pos.y += _stoneOffset;
+        stone.transform.position = pos;
+        
+        // 白の場合、石を回転させて反転させる
+        if(_gameTurnManager.CurrentTurnStoneColor == StoneColor.White) 
+            stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
+        
+        // 挟まれた石をめくる
+        FlipStone(row, column);
+    }
+
+    /// <summary>
+    /// 指定された位置に置いたことで、挟まれた石をめくる
+    /// </summary>
+    /// <param name="row">置いた石の行</param>
+    /// <param name="column">置いた石の列</param>
+    private void FlipStone(int row, int column)
+    {
+        foreach (var canPut in _canPutBoardPositions)
+        {
+            // 置いた石の位置と一致しない場合、処理をスキップ
+            if(canPut.PutPosition.row != row || canPut.PutPosition.column != column) continue;
+
+            // めくることができる石を全て取得し、めくる
+            foreach (var position in canPut.FlipPositions)
+            {
+                var flipRow = position.row;
+                var flipCol = position.column;
+                
+                // 盤面の情報を変更
+                _massData[flipRow, flipCol].StoneColor = _gameTurnManager.CurrentTurnStoneColor;
+                // 表示されている石の向きを変更
+                _stones[flipRow, flipCol].transform.rotation = 
+                    Quaternion.Euler(_gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
+            }
+            
+            return;
+        }
+    }
+
+    /// <summary>
+    /// 現在の手番の石を置くことができるマスと、めくれる石の更新
+    /// </summary>
+    public void CanPutBoardUpdate()
+    {
+        _canPutBoardPositions.Clear();
 
         for (int i = 0; i < _rows; i++)
         {
             for (int j = 0; j < _columns; j++)
             {
-                // まだ置かれていないマスを判定
-                if(_massData[i, j].StoneColor == StoneColor.None)
-                    emptyList.Add(_massData[i, j]);
-            }
-        }
-        
-        if(emptyList.Count == 0) return;
+                // 置かれている場合、処理を行わない
+                if(_massData[i, j].StoneColor != StoneColor.None) continue;
 
-        // 置くことができるかを判定
-        foreach (var empty in emptyList)
-        {
-            var record = empty.Record;
-            var row = record[0] - 'a';
-            var col = record[1] - '1';
-            
-            var cunPut = CheckSurroundingStone(row, col, StoneColor.Black);
-            if (cunPut) // 置ける
-            {
-                _boardRenderers[row, col].material = _canPutMaterial;
+                // 手番の石を置いたとき、めくれる石を取得
+                var flipPositions = CheckSurroundingStone(i, j, _gameTurnManager.CurrentTurnStoneColor);
+                if (flipPositions.Count > 0) 
+                {
+                    // 置ける位置とめくれる石位置の石を保持
+                    var canPut = new CanPutBoardPositions((i, j));
+                    foreach (var flipPosition in flipPositions)
+                    {
+                        canPut.AddFlipPosition(flipPosition.row, flipPosition.col);
+                    }
+                    
+                    _canPutBoardPositions.Add(canPut);
+                    _boardRenderers[i, j].material = _canPutMaterial;
+                }
+                else
+                {
+                    _boardRenderers[i, j].material = _normalMaterial;
+                }
             }
         }
     }
 
     /// <summary>
-    /// 周辺８マスから置くことができる
+    /// 周辺８方向で手番のじゃない石を挟めるか調べる
     /// </summary>
-    /// <param name="row">行</param>
-    /// <param name="column">列</param>
+    /// <param name="row">石を置く行</param>
+    /// <param name="column">石を置く列</param>
     /// <param name="currentStoneColor">手番の石の色</param>
     /// <returns>true：置くことができる　false：置くことができない</returns>
-    private bool CheckSurroundingStone(int row, int column, StoneColor currentStoneColor)
+    private List<(int row, int col)> CheckSurroundingStone(int row, int column, StoneColor currentStoneColor)
     {
+        var flipPositions = new List<(int, int)>();
+
         for (int i = 0; i < _surroundings.GetLength(0); i++)
         {
             // 移動方向
             var dirX = row + _surroundings[i, 0];
             var dirY = column + _surroundings[i, 1];
-            
+
             // 範囲外
             if(dirX < 0 || dirX >= _rows || dirY < 0 || dirY >= _columns) continue;
             // 石が置かれていない
             if(_massData[dirX, dirY].StoneColor == StoneColor.None) continue;
             // 調べた石と同じ色
             if(_massData[dirX, dirY].StoneColor == currentStoneColor) continue;
-            
-            // 相手の石が続いているのを判定する
-            if(ContinuedStone(dirX, dirY, _surroundings[i, 0], _surroundings[i, 1], currentStoneColor)) return true;
+
+            // めくれる石を取得
+            var pos = ContinuedStone(dirX, dirY, _surroundings[i, 0], _surroundings[i, 1], currentStoneColor);
+            flipPositions.AddRange(pos);
         }
-        
-        return false;
+
+        return flipPositions;
     }
 
     /// <summary>
@@ -251,10 +317,10 @@ public class BoardManager : MonoBehaviour
     /// <param name="dirY">Yの移動方向</param>
     /// <param name="color">手番の石の色</param>
     /// <returns>true：続いている　false：続いていない</returns>
-    private bool ContinuedStone(int searchX, int searchY, int dirX, int dirY, StoneColor color)
+    private List<(int row, int col)> ContinuedStone(int searchX, int searchY, int dirX, int dirY, StoneColor color)
     {
-        var check = new List<MassData>();
-        
+        var check = new List<(int, int)>();
+
         var x = searchX;
         var y = searchY;
 
@@ -264,26 +330,20 @@ public class BoardManager : MonoBehaviour
             var current = _massData[x, y];
 
             // 置いた石に到達
-            if (current.StoneColor == color)
-            {
-                // 1個でもあれば石の色を変更
-                if (check.Count > 0) return true;
+            if (current.StoneColor == color) return check;
 
-                return false;
-            }
-                
             // 何も置かれていない
-            if(current.StoneColor == StoneColor.None) return false;
-                
+            if(current.StoneColor == StoneColor.None) return new List<(int row, int col)>();
+
             // 相手の石を追加
-            check.Add(current);
+            check.Add((x, y));
 
             // 次の移動先
             x += dirX;
             y += dirY;
-                
+
             // 範囲外
-            if(x < 0 || x >= _rows || y < 0 || y >= _columns) return false;
+            if(x < 0 || x >= _rows || y < 0 || y >= _columns) return new List<(int row, int col)>();
         }
     }
 }
@@ -295,4 +355,35 @@ public class BoardManager : MonoBehaviour
 public class BoardTransform
 {
     public Transform[] _transforms;
+}
+
+/// <summary>
+/// 置ける位置の情報を保持
+/// </summary>
+public class CanPutBoardPositions
+{
+    /// <summary>
+    /// 置ける位置
+    /// </summary>
+    public (int row, int column) PutPosition { get; private set; }
+    /// <summary>
+    /// めくることができる位置
+    /// </summary>
+    public List<(int row, int column)> FlipPositions { get; private set; }
+
+    public CanPutBoardPositions((int row, int column) putPositions)
+    {
+        PutPosition = putPositions;
+        FlipPositions = new List<(int row, int column)>();
+    }
+    
+    /// <summary>
+    /// めくる位置を追加する
+    /// </summary>
+    /// <param name="row">行</param>
+    /// <param name="column">列</param>
+    public void AddFlipPosition(int row, int column)
+    {
+        FlipPositions.Add((row, column));
+    }
 }

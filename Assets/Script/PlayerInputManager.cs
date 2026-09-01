@@ -6,6 +6,7 @@ using UnityEngine;
 public class PlayerInputManager : MonoBehaviour
 {
     [SerializeField] private BoardManager _boardManager;
+    [SerializeField] private GameTurnManager _gameTurnManager;
     [Header("カーソル初期位置")]
     [SerializeField] private int _currentRow;
     [SerializeField] private int _currentColumn;
@@ -52,7 +53,9 @@ public class PlayerInputManager : MonoBehaviour
         // 置く
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            
+            _boardManager.PutStone(_currentRow, _currentColumn);
+            _gameTurnManager.ChangeCurrentTurnStoneColor();
+            _boardManager.CanPutBoardUpdate();
         }
     }
 }
