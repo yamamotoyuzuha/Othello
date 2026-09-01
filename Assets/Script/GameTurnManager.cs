@@ -20,11 +20,6 @@ public class GameTurnManager : MonoBehaviour
     {
         _currentTurnStoneColor = _startTurnStoneColor;
     }
-    
-    private void Start()
-    {
-        
-    }
 
     /// <summary>
     /// 現在の手番切替

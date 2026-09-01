@@ -1353,6 +1353,53 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1320849758344105193, guid: a95a6fbf3eb263642883396ffa90f259, type: 3}
   m_PrefabInstance: {fileID: 1060733090}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1200988064
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1200988066}
+  - component: {fileID: 1200988065}
+  m_Layer: 0
+  m_Name: GameRecordManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1200988065
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1200988064}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d8d76cccb27dc540a60e432dda317ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameRecordManager
+  _boardManager: {fileID: 379946999}
+  _gameTurnManager: {fileID: 183648889}
+  _gameRecordData: c4e3f2c3f4e2c2g2d2g3g4b2d6e6f3c5h1h5d3c7g1g5f5g6h6e1a1h7b5h2e7a2f1e8b1b6f6h4a3b4b8c1h3c6d7b7a5a4a6a7a8d1f8d8f7g8h8b3g7c8
+--- !u!4 &1200988066
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1200988064}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.73383, y: 0.05, z: -0.88953}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1241149856 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 1320849758344105193, guid: a95a6fbf3eb263642883396ffa90f259, type: 3}
@@ -1389,6 +1436,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInputManager
   _boardManager: {fileID: 379946999}
   _gameTurnManager: {fileID: 183648889}
+  _gameRecordManager: {fileID: 1200988065}
   _currentRow: 0
   _currentColumn: 0
 --- !u!4 &1471347310
@@ -1774,6 +1822,7 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 379947000}
+  - {fileID: 1200988066}
   - {fileID: 183648890}
   - {fileID: 1471347310}
   - {fileID: 658015745}

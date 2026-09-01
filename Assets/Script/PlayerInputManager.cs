@@ -7,6 +7,7 @@ public class PlayerInputManager : MonoBehaviour
 {
     [SerializeField] private BoardManager _boardManager;
     [SerializeField] private GameTurnManager _gameTurnManager;
+    [SerializeField] private GameRecordManager _gameRecordManager;
     [Header("カーソル初期位置")]
     [SerializeField] private int _currentRow;
     [SerializeField] private int _currentColumn;
@@ -56,6 +57,24 @@ public class PlayerInputManager : MonoBehaviour
             _boardManager.PutStone(_currentRow, _currentColumn);
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             _boardManager.CanPutBoardUpdate();
+        }
+        
+        GameRecordInput();
+    }
+
+    /// <summary>
+    /// 棋譜を動かす
+    /// </summary>
+    private void GameRecordInput()
+    {
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            _gameRecordManager.MoveGameRecord(-1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            _gameRecordManager.MoveGameRecord(1);
         }
     }
 }

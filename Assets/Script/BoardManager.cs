@@ -34,7 +34,11 @@ public class BoardManager : MonoBehaviour
     /// 置ける位置を保持
     /// ・手番が切り替わるごとにクリアを行う
     /// </summary>
-    private List<CanPutBoardPositions> _canPutBoardPositions = new List<CanPutBoardPositions>();
+    private readonly List<CanPutBoardPositions> _canPutBoardPositions = new List<CanPutBoardPositions>();
+    /// <summary>
+    /// 今まで打った手の保持
+    /// </summary>
+    private readonly List<CanPutBoardPositions> _putBoardHistory = new List<CanPutBoardPositions>();
     
     // 周辺8マスの移動方向
     private readonly int[,] _surroundings =
@@ -82,11 +86,11 @@ public class BoardManager : MonoBehaviour
                 var num = (i + 1).ToString();
                 var alphabetNum = alphabet.ToString();
                 var record = alphabetNum + num;
-
+                
                 // 必要なデータの生成
                 var massData = new MassData(StoneColor.None, record);
                 _massData[i, j] = massData;
-
+                
                 alphabet++;
             }
             
@@ -186,13 +190,14 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     /// <param name="row">置く石の行</param>
     /// <param name="column">置く石の列</param>
-    public void PutStone(int row, int column)
+    public bool PutStone(int row, int column)
     {
         // 現在の手番で置けない場合、処理をしない
-        if(!IsCanPutPosition(row, column)) return;
-
+        if(!IsCanPutPosition(row, column)) return false;
+        
         // 盤面の石の色を現在の手番の石の色に変更
         _massData[row, column].StoneColor = _gameTurnManager.CurrentTurnStoneColor;
+        _boardRenderers[row, column].material = _normalMaterial;
         
         // 石の生成を行う
         var stone = Instantiate(_stonePrefab, _stoneParent);
@@ -201,13 +206,47 @@ public class BoardManager : MonoBehaviour
         var pos = _stoneTransforms[row]._transforms[column].position;
         pos.y += _stoneOffset;
         stone.transform.position = pos;
-        
+            
         // 白の場合、石を回転させて反転させる
         if(_gameTurnManager.CurrentTurnStoneColor == StoneColor.White) 
             stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
         
         // 挟まれた石をめくる
         FlipStone(row, column);
+
+        return true;
+    }
+
+    /// <summary>
+    /// 置いた石を元に戻す
+    /// </summary>
+    /// <param name="row">元に戻す石の行</param>
+    /// <param name="column">元に戻す石の列</param>
+    public void UndoPutStone(int row, int column)
+    {
+        // 元に戻す石の情報等を削除する
+        _massData[row, column].StoneColor = StoneColor.None;
+        Destroy(_stones[row, column]);
+        _stones[row, column] = null;
+        
+        // 最後に行った手
+        var last = _putBoardHistory[^1];
+        // 前の手番の石
+        var previousColor = _gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ?
+            StoneColor.White : StoneColor.Black;
+
+        // めくった石の情報も削除する
+        foreach (var position in last.FlipPositions)
+        {
+            var flipRow = position.row;
+            var flipCol = position.column;
+            // 石の情報等を元に戻す
+            _massData[flipRow, flipCol].StoneColor = previousColor;
+            _stones[flipRow, flipCol].transform.rotation = 
+                Quaternion.Euler(previousColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
+        }
+        
+        _putBoardHistory.RemoveAt(_putBoardHistory.Count - 1);
     }
 
     /// <summary>
@@ -217,6 +256,7 @@ public class BoardManager : MonoBehaviour
     /// <param name="column">置いた石の列</param>
     private void FlipStone(int row, int column)
     {
+        var putData = new CanPutBoardPositions((row, column));
         foreach (var canPut in _canPutBoardPositions)
         {
             // 置いた石の位置と一致しない場合、処理をスキップ
@@ -227,6 +267,8 @@ public class BoardManager : MonoBehaviour
             {
                 var flipRow = position.row;
                 var flipCol = position.column;
+                // 履歴を保持
+                putData.AddFlipPosition(flipRow, flipCol);
                 
                 // 盤面の情報を変更
                 _massData[flipRow, flipCol].StoneColor = _gameTurnManager.CurrentTurnStoneColor;
@@ -235,6 +277,7 @@ public class BoardManager : MonoBehaviour
                     Quaternion.Euler(_gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
             }
             
+            _putBoardHistory.Add(putData);
             return;
         }
     }
@@ -251,7 +294,7 @@ public class BoardManager : MonoBehaviour
             for (int j = 0; j < _columns; j++)
             {
                 // 置かれている場合、処理を行わない
-                if(_massData[i, j].StoneColor != StoneColor.None) continue;
+                if (_massData[i, j].StoneColor != StoneColor.None) continue;
 
                 // 手番の石を置いたとき、めくれる石を取得
                 var flipPositions = CheckSurroundingStone(i, j, _gameTurnManager.CurrentTurnStoneColor);
@@ -293,7 +336,7 @@ public class BoardManager : MonoBehaviour
             var dirY = column + _surroundings[i, 1];
 
             // 範囲外
-            if(dirX < 0 || dirX >= _rows || dirY < 0 || dirY >= _columns) continue;
+            if(!IsWithinRange(dirX, dirY)) continue;
             // 石が置かれていない
             if(_massData[dirX, dirY].StoneColor == StoneColor.None) continue;
             // 調べた石と同じ色
@@ -342,7 +385,7 @@ public class BoardManager : MonoBehaviour
             y += dirY;
 
             // 範囲外
-            if(x < 0 || x >= _rows || y < 0 || y >= _columns) return new List<(int row, int col)>();
+            if(!IsWithinRange(x, y)) return new List<(int row, int col)>();
         }
     }
 }
