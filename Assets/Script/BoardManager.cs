@@ -51,8 +51,9 @@ public class BoardManager : MonoBehaviour
     private readonly int _columns = 8;
     
     
-    // TODO：持ち時間
+    // TODO：スキップ（お互いが置けない）
     // TODO：AIの実装
+    // TODO：勝敗
     
 
     private void Awake()
@@ -190,6 +191,7 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     /// <param name="row">置く石の行</param>
     /// <param name="column">置く石の列</param>
+    /// <returns>true：置ける　false：置けない</returns>
     public bool PutStone(int row, int column)
     {
         // 現在の手番で置けない場合、処理をしない

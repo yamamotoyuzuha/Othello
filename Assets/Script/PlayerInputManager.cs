@@ -54,9 +54,10 @@ public class PlayerInputManager : MonoBehaviour
         // 置く
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            _boardManager.PutStone(_currentRow, _currentColumn);
+            if(!_boardManager.PutStone(_currentRow, _currentColumn)) return;
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             _boardManager.CanPutBoardUpdate();
+            _boardManager.SelectBoardColor(_currentRow, _currentColumn);
         }
         
         GameRecordInput();

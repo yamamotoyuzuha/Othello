@@ -252,7 +252,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameTurnManager
   _startTurnStoneColor: 1
   _currentTurnStoneColor: 0
-  _timeLimit: 0
+  _timeLimit: 5
 --- !u!4 &183648890
 Transform:
   m_ObjectHideFlags: 0
