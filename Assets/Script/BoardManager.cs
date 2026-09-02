@@ -49,9 +49,13 @@ public class BoardManager : MonoBehaviour
     };
     private readonly int _rows = 8;
     private readonly int _columns = 8;
+    /// <summary>
+    /// パスした回数
+    /// </summary>
+    private int _passCount;
     
     
-    // TODO：パス（お互いが置けない）
+    // TODO：パスの判定は大丈夫だが、パスになった後に棋譜を戻すとエラーになる
     // TODO：AIの実装
     // TODO：勝敗
     
@@ -306,8 +310,9 @@ public class BoardManager : MonoBehaviour
 
                 // 手番の石を置いたとき、めくれる石を取得
                 var flipPositions = CheckSurroundingStone(i, j, _gameTurnManager.CurrentTurnStoneColor);
-                if (flipPositions.Count > 0) 
+                if (flipPositions.Count > 0)
                 {
+                    _passCount = 0;
                     // 置ける位置とめくれる石位置の石を保持
                     var canPut = new CanPutBoardPositions((i, j));
                     foreach (var flipPosition in flipPositions)
@@ -320,12 +325,37 @@ public class BoardManager : MonoBehaviour
                 }
                 else
                 {
-                    //TODO：パスになったときの処理
-                    
                     _boardRenderers[i, j].material = _normalMaterial;
                 }
             }
         }
+        
+        // パスかどうか判定する
+        IsPassCheck();
+    }
+
+    /// <summary>
+    /// パスかどうか判定を行う
+    /// ・まだパスが2回でないなら、手番を切り替えて盤面を更新
+    /// ・パスが2回になったら、引き分けにする
+    /// </summary>
+    private void IsPassCheck()
+    {
+        if (_canPutBoardPositions.Count == 0)
+        {
+            _passCount++;
+            if (_passCount == 2)
+            {
+                Debug.LogWarning("引き分けになりました。");
+                return;
+            }
+            
+            // 手番を切り替えて盤面を更新
+            _gameTurnManager.ChangeCurrentTurnStoneColor();
+            CanPutBoardUpdate();
+        }
+        
+        _passCount = 0;
     }
 
     /// <summary>

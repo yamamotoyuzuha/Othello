@@ -66,11 +66,6 @@ public class GameRecordManager : MonoBehaviour
             if (!_boardManager.PutStone(row, col)) // 置くことができなかった場合
             {
                 Debug.LogWarning($"置くことが出来なかった{record}");
-                
-                // 一旦仮でパスの実装
-                _gameTurnManager.ChangeCurrentTurnStoneColor();
-                _boardManager.CanPutBoardUpdate();
-                
                 return;
             }
 
