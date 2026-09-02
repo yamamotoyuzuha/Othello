@@ -215,6 +215,12 @@ public class BoardManager : MonoBehaviour
         
         // 挟まれた石をめくる
         FlipStone(row, column);
+        
+        // 途中勝利の判定を行う
+        if (IsMidwayVictory())
+        {
+            Debug.LogWarning($"途中勝利した手番：{_gameTurnManager.CurrentTurnStoneColor}");
+        }
 
         return true;
     }
@@ -314,6 +320,8 @@ public class BoardManager : MonoBehaviour
                 }
                 else
                 {
+                    //TODO：パスになったときの処理
+                    
                     _boardRenderers[i, j].material = _normalMaterial;
                 }
             }
@@ -389,6 +397,26 @@ public class BoardManager : MonoBehaviour
             // 範囲外
             if(!IsWithinRange(x, y)) return new List<(int row, int col)>();
         }
+    }
+
+    /// <summary>
+    /// 途中勝利かを返す
+    /// </summary>
+    /// <returns>true：途中勝利　false：途中勝利じゃない</returns>
+    public bool IsMidwayVictory()
+    {
+        // 1個でも手番以外の石が存在しているかを判定する
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                if(_massData[i, j].StoneColor == StoneColor.None) continue;
+                
+                if(_massData[i, j].StoneColor != _gameTurnManager.CurrentTurnStoneColor) return false;
+            }
+        }
+        
+        return true;
     }
 }
 

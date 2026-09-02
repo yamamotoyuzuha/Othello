@@ -63,12 +63,17 @@ public class GameRecordManager : MonoBehaviour
             var row = record[1] - '1';
             var col = record[0] - 'A';
 
-            if (!_boardManager.PutStone(row, col))
+            if (!_boardManager.PutStone(row, col)) // 置くことができなかった場合
             {
                 Debug.LogWarning($"置くことが出来なかった{record}");
+                
+                // 一旦仮でパスの実装
+                _gameTurnManager.ChangeCurrentTurnStoneColor();
+                _boardManager.CanPutBoardUpdate();
+                
                 return;
             }
-            
+
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             _currentGameRecord++;
         }
@@ -78,7 +83,7 @@ public class GameRecordManager : MonoBehaviour
             var record = _gameRecordInput[_currentGameRecord - 1];
             // 棋譜を配列の座標に変換する
             var row = record[1] - '1';
-            var col = record[0] - 'a';
+            var col = record[0] - 'A';
             
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             _boardManager.UndoPutStone(row, col);
