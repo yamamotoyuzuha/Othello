@@ -58,10 +58,10 @@ public class GameRecordManager : MonoBehaviour
         if (gameRecord > 0)
         {
             if(_currentGameRecord >= _gameRecordInput.Count) return;
-            var record = _gameRecordInput[_currentGameRecord];
+            var record = _gameRecordInput[_currentGameRecord].ToUpper(); // 大文字に統一
             // 棋譜を配列の座標に変換する
             var row = record[1] - '1';
-            var col = record[0] - 'a';
+            var col = record[0] - 'A';
 
             if (!_boardManager.PutStone(row, col))
             {

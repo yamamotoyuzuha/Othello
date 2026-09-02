@@ -51,7 +51,7 @@ public class BoardManager : MonoBehaviour
     private readonly int _columns = 8;
     
     
-    // TODO：スキップ（お互いが置けない）
+    // TODO：パス（お互いが置けない）
     // TODO：AIの実装
     // TODO：勝敗
     
@@ -73,7 +73,7 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     private void BoardInitialization()
     {
-        var alphabet = 'a';
+        var alphabet = 'A';
 
         for (int i = 0; i < _rows; i++)
         {
@@ -95,7 +95,7 @@ public class BoardManager : MonoBehaviour
                 alphabet++;
             }
             
-            alphabet = 'a';
+            alphabet = 'A';
         }
     }
 
