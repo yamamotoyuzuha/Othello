@@ -11,7 +11,7 @@ public class OthelloAI : MonoBehaviour
     /// <summary>
     /// 評価値
     /// </summary>
-    private static readonly int[,] EvaluateStoneStatesScore = new int[,]
+    private static readonly int[,] EvaluateStoneStatesScore = 
     {
         { 30, -12, 0, -1, -1, 0, -12, 30 },
         { -12, -15, -3, -3, -3, -3, -15, -12 },
@@ -62,7 +62,7 @@ public class OthelloAI : MonoBehaviour
         var canPutPosition = _boardManager.GetCanPutBoardPositions(massData, stoneColor);
         foreach (var canPut in canPutPosition)
         {
-            Debug.LogWarning($"候補手: {stoneColor} ({canPut.PutPosition.row}, {canPut.PutPosition.column})");
+            //Debug.LogWarning($"候補手: {stoneColor} ({canPut.PutPosition.row}, {canPut.PutPosition.column})");
             // 盤面をコピー
             var copyMassData = _boardManager.CopyBoard(massData);
             // 仮で石を置き、置いた後の盤面を取得する
