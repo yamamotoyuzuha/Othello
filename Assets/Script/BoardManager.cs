@@ -7,7 +7,6 @@ using UnityEngine;
 /// </summary>
 public class BoardManager : MonoBehaviour
 {
-    [Header("AIを使うか"), SerializeField] private bool _isUseAI;
     [SerializeField] private GameTurnManager _gameTurnManager;
     [Header("石の生成位置（Parent）"), SerializeField] private Transform _stoneParent;
     [Header("石"), SerializeField] private GameObject _stonePrefab;
@@ -35,14 +34,15 @@ public class BoardManager : MonoBehaviour
     /// 置ける位置を保持
     /// ・手番が切り替わるごとにクリアを行う
     /// </summary>
-    private readonly List<CanPutBoardPositions> _canPutBoardPositions = new List<CanPutBoardPositions>();
+    private readonly List<CanPutBoardPositions> _canPutBoardPositions = new();
     /// <summary>
     /// 今まで打った手の保持
     /// ・パスの場合、nullで登録する
     /// </summary>
-    private readonly List<CanPutBoardPositions> _putBoardHistory = new List<CanPutBoardPositions>();
-    
-    // 周辺8マスの移動方向
+    private readonly List<CanPutBoardPositions> _putBoardHistory = new();
+    /// <summary>
+    /// 周辺8マスの移動方向
+    /// </summary>
     private readonly int[,] _surroundings =
     {
         { -1, -1 }, { -1, 0 }, { -1, 1 },
@@ -56,16 +56,7 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     private int _passCount;
     /// <summary>
-    /// ゲーム終了
-    /// </summary>
-    private bool _isGameStop; // TODO：ここは一旦仮で作ってるから後でゲームマネージャーに移す
-    /// <summary>
-    /// 勝利した石の色
-    /// </summary>
-    private StoneColor _winnerStone;
-
-    /// <summary>
-    /// 選択したAI
+    /// 対戦中のAI
     /// </summary>
     private AI _ai;
 
@@ -87,10 +78,9 @@ public class BoardManager : MonoBehaviour
 
     private void Update()
     {
-        if(_isGameStop) return;
-        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && _isUseAI)
+        if(GameManager.Instance.IsGameEnd || GameManager.Instance.IsRecord) return;
+        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && GameManager.Instance.IsUseAI)
         {
-            Debug.Log("AIが置く");
             _ai.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
             
             // 手番の変更と盤面更新
@@ -291,10 +281,9 @@ public class BoardManager : MonoBehaviour
         UpdateStoneCount();
         
         // 途中勝利の判定を行う
-        if (IsMidwayVictory(out _winnerStone))
+        if (IsMidwayVictory())
         {
             Debug.LogWarning($"途中勝利した手番：{_gameTurnManager.CurrentTurnStoneColor}");
-            _isGameStop = true;
         }
 
         return true;
@@ -395,9 +384,8 @@ public class BoardManager : MonoBehaviour
             _canPutBoardPositions.Clear();
 
             // 盤面が全て埋まっているか、黒と白のどちらかが全滅していたら終了
-            if (IsAllFullStone() || IsMidwayVictory(out _winnerStone))
+            if (IsAllFullStone() || IsMidwayVictory())
             {
-                _isGameStop = true;
                 CheckGameResult();
                 return;
             }
@@ -445,7 +433,7 @@ public class BoardManager : MonoBehaviour
             if (_passCount >= 2)
             {
                 Debug.LogWarning("パスが２回行われたので、ゲームを終了");
-                _isGameStop = true;
+                CheckGameResult();
                 return;
             }
             
@@ -547,26 +535,24 @@ public class BoardManager : MonoBehaviour
         if (black > white) // 黒の勝利
         {
             Debug.LogWarning("黒の勝利");
-            _winnerStone = StoneColor.Black;
+            GameManager.Instance.GameEnd(StoneColor.Black);
         }
         else if (white > black) // 白の勝利
         {
             Debug.LogWarning("白の勝利");
-            _winnerStone = StoneColor.White;
+            GameManager.Instance.GameEnd(StoneColor.White);
         }
         
         // 引き分け
-        _winnerStone = StoneColor.None;
+        GameManager.Instance.GameEnd(StoneColor.None);
     }
 
     /// <summary>
     /// 途中勝利が発生しているか判定し、勝者を決める
     /// </summary>
-    /// <param name="winner">勝利した石の色</param>
     /// <returns>true：途中勝利　false：途中勝利ではない</returns>
-    private bool IsMidwayVictory(out StoneColor winner)
+    private bool IsMidwayVictory()
     {
-        winner = StoneColor.None;
         var black = false;
         var white = false;
 
@@ -584,13 +570,13 @@ public class BoardManager : MonoBehaviour
 
         if (black) // 黒の勝利
         {
-            winner = StoneColor.Black;
+            GameManager.Instance.GameEnd(StoneColor.Black);
             return true;
         }
 
         if (white) // 白の勝利
         {
-            winner = StoneColor.White;
+            GameManager.Instance.GameEnd(StoneColor.White);
             return true;
         }
 

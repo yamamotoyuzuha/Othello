@@ -12,6 +12,9 @@ public class PlayerInputManager : MonoBehaviour
     [SerializeField] private int _currentRow;
     [SerializeField] private int _currentColumn;
     
+    public int CurrentRow => _currentRow;
+    public int CurrentColumn => _currentColumn;
+
     private void Start()
     {
         _boardManager.SelectBoardColor(_currentRow, _currentColumn);
@@ -19,6 +22,9 @@ public class PlayerInputManager : MonoBehaviour
 
     private void Update()
     {
+        // ゲームが終了したら入力受付をやめる
+        if(GameManager.Instance.IsGameEnd) return;
+        
         if (Input.GetKeyDown(KeyCode.LeftArrow))
         {
             if(!_boardManager.IsWithinRange(_currentRow, _currentColumn - 1)) return;
@@ -52,7 +58,7 @@ public class PlayerInputManager : MonoBehaviour
         }
 
         // 置く
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (Input.GetKeyDown(KeyCode.Return) && GameManager.Instance.IsRecord)
         {
             if(!_boardManager.PutStone(_currentRow, _currentColumn)) return;
             _gameTurnManager.ChangeCurrentTurnStoneColor();

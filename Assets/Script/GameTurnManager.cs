@@ -28,6 +28,8 @@ public class GameTurnManager : MonoBehaviour
 
     private void Update()
     {
+        // ゲームが終了したらタイマー更新を止める
+        if(GameManager.Instance.IsGameEnd || GameManager.Instance.IsRecord) return;
         TimeLimitTimer();
     }
 
@@ -55,6 +57,7 @@ public class GameTurnManager : MonoBehaviour
                 if (_blackTimeLimitTimer <= 0)
                 {
                     Debug.LogWarning("黒の時間切れ");
+                    GameManager.Instance.GameEnd(StoneColor.White);
                 }
                 break;
             case StoneColor.White:
@@ -63,6 +66,7 @@ public class GameTurnManager : MonoBehaviour
                 if (_whiteTimeLimitTimer <= 0)
                 {
                     Debug.LogWarning("白の時間切れ");
+                    GameManager.Instance.GameEnd(StoneColor.Black);
                 }
                 break;
         }

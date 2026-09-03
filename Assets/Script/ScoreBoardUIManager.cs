@@ -31,11 +31,11 @@ public class ScoreBoardUIManager : MonoBehaviour
 
     public void SetTime(int time)
     {
-        _timeText.text = time.ToString();
+        _timeText.text = $"Time:{time.ToString()}";
     }
 
     public void SetTurn(string turn)
     {
-        _turnText.text = turn;
+        _turnText.text = $"Turn:{turn}";
     }
 }
