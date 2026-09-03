@@ -2,13 +2,11 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// AI
+/// negamax法
 /// </summary>
-public class OthelloAI : MonoBehaviour
+public class NegaMaxAI : AI
 {
-    [Header("AIを使う"), SerializeField] private bool _isUseAI;
-    public bool IsUseAI => _isUseAI;
-    [SerializeField] private BoardManager _boardManager;
+    private readonly int _searchDepth;
     
     /// <summary>
     /// 評価値
@@ -25,26 +23,25 @@ public class OthelloAI : MonoBehaviour
         { 30, -12, 0, -1, -1, 0, -12, 30 },
     };
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="massData">現在の盤面</param>
-    /// <param name="stoneColor">AIの石の色</param>
-    public void ThinkingAI(MassData[,] massData, StoneColor stoneColor)
+    public NegaMaxAI(BoardManager boardManager, int searchDepth = 3) : base(boardManager)
     {
-        
-        
+        _searchDepth = searchDepth;
+    }
+    
+    public override void ThinkingAI(MassData[,] massData, StoneColor stoneColor)
+    {
         // 現在の盤面をコピー
-        var copyMassData = _boardManager.CopyBoard(massData);
+        var copyMassData = BoardManager.CopyBoard(massData);
         // 最適な手を取得する
-        var result = SearchNegaMaxStone(copyMassData, stoneColor, 2);
+        var result = SearchNegaMaxStone(copyMassData, stoneColor, _searchDepth);
         if (result == (-1, -1)) // 手が見つからなかった
         {
             Debug.LogWarning("見つかりませんでした");
+            return;
         }
         
         // 実際に石を置く
-        _boardManager.PutStone(result.Item1, result.Item2);
+        BoardManager.PutStone(result.Item1, result.Item2);
     }
 
     /// <summary>
@@ -61,18 +58,16 @@ public class OthelloAI : MonoBehaviour
         var maxScore = int.MinValue;
         
         // 現在の手番で置ける位置を全て取得する
-        var canPutPosition = _boardManager.GetCanPutBoardPositions(massData, stoneColor);
+        var canPutPosition = BoardManager.GetCanPutBoardPositions(massData, stoneColor);
         foreach (var canPut in canPutPosition)
         {
             //Debug.LogWarning($"候補手: {stoneColor} ({canPut.PutPosition.row}, {canPut.PutPosition.column})");
             // 盤面をコピー
-            var copyMassData = _boardManager.CopyBoard(massData);
+            var copyMassData = BoardManager.CopyBoard(massData);
             // 仮で石を置き、置いた後の盤面を取得する
-            var putStone = _boardManager.PutStoneTemporarily(copyMassData, canPut.PutPosition.row, canPut.PutPosition.column, stoneColor);
-            // 手番を変更
-            var color = GetStoneColor(stoneColor);
+            var putStone = BoardManager.PutStoneTemporarily(copyMassData, canPut.PutPosition.row, canPut.PutPosition.column, stoneColor);
             // 相手が置いた評価値を反転して、自分の評価値とする
-            var score = -1 * GetNegaMaxScore(putStone, color, depth - 1);
+            var score = -1 * GetNegaMaxScore(putStone, GetStoneColor(stoneColor), depth - 1);
 
             // 評価値を更新
             if (maxScore < score)
@@ -90,36 +85,33 @@ public class OthelloAI : MonoBehaviour
     /// <param name="massData">現在の盤面</param>
     /// <param name="stone">手番の石の色</param>
     /// <param name="depth">探索の深さ</param>
-    /// <returns></returns>
-    private int GetNegaMaxScore(MassData[,] massData, StoneColor stone, int depth)
+    /// <param name="isPass">パスしたかどうか</param>
+    /// <returns>最大スコア</returns>
+    private int GetNegaMaxScore(MassData[,] massData, StoneColor stone, int depth, bool isPass = false)
     {
         // 探索上限に達したら
         if(depth == 0) return EvaluateStoneStates(massData, stone);
 
         var maxScore = int.MinValue;
-        
+
         // 現在の手番で置ける位置を全て取得する
-        var canPutPosition = _boardManager.GetCanPutBoardPositions(massData, stone);
-        if (canPutPosition.Count == 0) // パスの場合
-        {
-            var color = GetStoneColor(stone);
-            var putStone = _boardManager.GetCanPutBoardPositions(massData, color);
-            if (putStone.Count == 0) // 相手もパスの場合
-            {
-                return EvaluateStoneStates(massData, stone);
-            }
-            
-            // パスのため、深さは減らさない
-            return -1 * GetNegaMaxScore(massData, color, depth);
-        }
-        
+        var canPutPosition = BoardManager.GetCanPutBoardPositions(massData, stone);
         foreach (var canPut in canPutPosition)
         {
-            Debug.Log($"置かれる可能性がある手: {stone} ({canPut.PutPosition.row}, {canPut.PutPosition.column})");
-            var copyMassData = _boardManager.CopyBoard(massData);
-            var putStone = _boardManager.PutStoneTemporarily(copyMassData, canPut.PutPosition.row, canPut.PutPosition.column, stone);
-            var color = GetStoneColor(stone);
-            maxScore = Math.Max(maxScore, -1 * GetNegaMaxScore(putStone, color, depth - 1));
+            // 仮で石を置き、置いた後の盤面を取得する
+            var copyMassData = BoardManager.CopyBoard(massData);
+            var putStone =
+                BoardManager.PutStoneTemporarily(copyMassData, canPut.PutPosition.row, canPut.PutPosition.column, stone);
+            maxScore = Math.Max(maxScore, -1 * GetNegaMaxScore(putStone, GetStoneColor(stone), depth - 1));
+        }
+
+        // 見つからなかった場合
+        if (maxScore == int.MinValue)
+        {
+            // ２回連続パスの場合、評価関数を実行
+            if(isPass) return EvaluateStoneStates(massData, stone);
+            // 相手の手番にして、評価値を反転して返す
+            return -1 * GetNegaMaxScore(massData, GetStoneColor(stone), depth - 1, true);
         }
 
         return maxScore;

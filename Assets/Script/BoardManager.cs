@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public class BoardManager : MonoBehaviour
 {
-    [SerializeField] private OthelloAI _othelloAI;
+    [Header("AIを使うか"), SerializeField] private bool _isUseAI;
     [SerializeField] private GameTurnManager _gameTurnManager;
     [Header("石の生成位置（Parent）"), SerializeField] private Transform _stoneParent;
     [Header("石"), SerializeField] private GameObject _stonePrefab;
@@ -63,12 +63,17 @@ public class BoardManager : MonoBehaviour
     /// 勝利した石の色
     /// </summary>
     private StoneColor _winnerStone;
-    
-    
-    // TODO：パスになった後に棋譜を戻すとエラーになる
-    
-    
-    
+
+    /// <summary>
+    /// 選択したAI
+    /// </summary>
+    private AI _ai;
+
+    private void Awake()
+    {
+        _ai = new NegaMaxAI(this);
+    }
+
     private void Start()
     {
         _boardRenderers = new Renderer[_rows, _columns];
@@ -83,10 +88,10 @@ public class BoardManager : MonoBehaviour
     private void Update()
     {
         if(_isGameStop) return;
-        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && _othelloAI.IsUseAI)
+        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && _isUseAI)
         {
             Debug.Log("AIが置く");
-            _othelloAI.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
+            _ai.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
             
             // 手番の変更と盤面更新
             _gameTurnManager.ChangeCurrentTurnStoneColor();
