@@ -6,6 +6,8 @@ using UnityEngine;
 /// </summary>
 public class OthelloAI : MonoBehaviour
 {
+    [Header("AIを使う"), SerializeField] private bool _isUseAI;
+    public bool IsUseAI => _isUseAI;
     [SerializeField] private BoardManager _boardManager;
     
     /// <summary>

@@ -1571,6 +1571,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 239b4bba89704cc4381e90e6db54ab50, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::OthelloAI
+  _isUseAI: 0
   _boardManager: {fileID: 379946999}
 --- !u!4 &968313454
 Transform:
@@ -1843,7 +1844,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameRecordManager
   _boardManager: {fileID: 379946999}
   _gameTurnManager: {fileID: 183648889}
-  _gameRecordData: F5D6C5F4E7F6G5E6E3
+  _gameRecordData: F5F6D3G5H5H4F7H6C5F4
 --- !u!4 &1200988066
 Transform:
   m_ObjectHideFlags: 0

@@ -66,8 +66,8 @@ public class BoardManager : MonoBehaviour
     
     
     // TODO：パスになった後に棋譜を戻すとエラーになる
-    // TODO：勝敗
-
+    
+    
     
     private void Start()
     {
@@ -83,17 +83,12 @@ public class BoardManager : MonoBehaviour
     private void Update()
     {
         if(_isGameStop) return;
-        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White)
+        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && _othelloAI.IsUseAI)
         {
-            if (IsAllFullStone())
-            {
-                Debug.LogWarning("盤面が全て埋まりました");
-                _isGameStop = true;
-                return;
-            }
-            
             Debug.Log("AIが置く");
             _othelloAI.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
+            
+            // 手番の変更と盤面更新
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             CanPutBoardUpdate();
         }
@@ -303,15 +298,33 @@ public class BoardManager : MonoBehaviour
     /// <summary>
     /// 置いた石を元に戻す
     /// </summary>
-    /// <param name="row">元に戻す石の行</param>
-    /// <param name="column">元に戻す石の列</param>
-    public void UndoPutStone(int row, int column)
+    public void UndoPutStone()
     {
+        if(_putBoardHistory.Count == 0) return;
+
+        // パスの場合
+        if (_putBoardHistory[^1] == null)
+        {
+            _putBoardHistory.RemoveAt(_putBoardHistory.Count - 1);
+            if (_passCount > 0) _passCount--;
+
+            // パスの前の手番に戻す
+            _gameTurnManager.ChangeCurrentTurnStoneColor();
+        }
+        
+        // 置いた石を取り消し
+        var lastIndex = _putBoardHistory.Count - 1;
+        var last = _putBoardHistory[lastIndex];
+        
+        var row = last.PutPosition.row;
+        var column = last.PutPosition.column;
+        
         // 元に戻す石の情報等を削除する
         _massData[row, column].StoneColor = StoneColor.None;
         Destroy(_stones[row, column]);
         _stones[row, column] = null;
         
+        _gameTurnManager.ChangeCurrentTurnStoneColor();
         // 前の手番の石
         var previousColor = _gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ?
             StoneColor.White : StoneColor.Black;
@@ -327,7 +340,10 @@ public class BoardManager : MonoBehaviour
                 Quaternion.Euler(previousColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
         }
         
-        _putBoardHistory.RemoveAt(_putBoardHistory.Count - 1);
+        _putBoardHistory.RemoveAt(lastIndex);
+        
+        CanPutBoardUpdate(false);
+        UpdateStoneCount();
     }
 
     /// <summary>
@@ -366,7 +382,8 @@ public class BoardManager : MonoBehaviour
     /// <summary>
     /// 現在の手番の石を置くことができるマスと、めくれる石の更新
     /// </summary>
-    public void CanPutBoardUpdate()
+    /// <param name="isPass">true：パス判定を行う　false：行わない</param>
+    public void CanPutBoardUpdate(bool isPass = true)
     {
         while (true)
         {
@@ -411,6 +428,9 @@ public class BoardManager : MonoBehaviour
                 _passCount = 0;
                 return;
             }
+            
+            // パスの判定を行わない
+            if(!isPass) return;
             
             // パスの処理
             _passCount++;
