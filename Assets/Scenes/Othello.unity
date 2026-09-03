@@ -262,7 +262,7 @@ Transform:
   m_GameObject: {fileID: 183648888}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.73383, y: 0.05, z: -0.88953}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -572,6 +572,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5c21bed88636b64691a2dc471c30400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InGame.Board.BoardManager
+  _othelloAI: {fileID: 968313453}
   _gameTurnManager: {fileID: 183648889}
   _stoneParent: {fileID: 658015745}
   _stonePrefab: {fileID: 1113119932161040338, guid: ea4e19047a70f2d4c94d42478948280f, type: 3}
@@ -1025,7 +1026,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &775384726
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1239,6 +1240,51 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1320849758344105193, guid: a95a6fbf3eb263642883396ffa90f259, type: 3}
   m_PrefabInstance: {fileID: 424163422}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &968313452
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 968313454}
+  - component: {fileID: 968313453}
+  m_Layer: 0
+  m_Name: OhelloAI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &968313453
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968313452}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239b4bba89704cc4381e90e6db54ab50, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OthelloAI
+  _boardManager: {fileID: 379946999}
+--- !u!4 &968313454
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 968313452}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 898.38684, y: 531.74286, z: 554.8025}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1039826931
 GameObject:
   m_ObjectHideFlags: 0
@@ -1505,7 +1551,7 @@ Transform:
   m_GameObject: {fileID: 1200988064}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.73383, y: 0.05, z: -0.88953}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1559,12 +1605,59 @@ Transform:
   m_GameObject: {fileID: 1471347308}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.57337, y: 0.05, z: -0.72561}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1473485225
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1473485226}
+  - component: {fileID: 1473485227}
+  m_Layer: 0
+  m_Name: ScoreBoardUIManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1473485226
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473485225}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1473485227
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1473485225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4b6f1530d6feaf4ea488ec365357580, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ScoreBoardUIManager
+  _stoneCountText: {fileID: 0}
+  _timeText: {fileID: 0}
+  _turnText: {fileID: 0}
 --- !u!1001 &1609069080
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1690,7 +1783,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1783114278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1936,7 +2029,9 @@ SceneRoots:
   - {fileID: 379947000}
   - {fileID: 1200988066}
   - {fileID: 183648890}
+  - {fileID: 968313454}
   - {fileID: 1471347310}
+  - {fileID: 1473485226}
   - {fileID: 658015745}
   - {fileID: 1078889750}
   - {fileID: 1783114281}
