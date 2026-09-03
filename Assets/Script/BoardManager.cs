@@ -7,6 +7,7 @@ using UnityEngine;
 /// </summary>
 public class BoardManager : MonoBehaviour
 {
+    [SerializeField] private OthelloAI _othelloAI;
     [SerializeField] private GameTurnManager _gameTurnManager;
     [Header("石の生成位置（Parent）"), SerializeField] private Transform _stoneParent;
     [Header("石"), SerializeField] private GameObject _stonePrefab;
@@ -37,6 +38,7 @@ public class BoardManager : MonoBehaviour
     private readonly List<CanPutBoardPositions> _canPutBoardPositions = new List<CanPutBoardPositions>();
     /// <summary>
     /// 今まで打った手の保持
+    /// ・パスの場合、nullで登録する
     /// </summary>
     private readonly List<CanPutBoardPositions> _putBoardHistory = new List<CanPutBoardPositions>();
     
@@ -53,14 +55,21 @@ public class BoardManager : MonoBehaviour
     /// パスした回数
     /// </summary>
     private int _passCount;
+    /// <summary>
+    /// ゲーム終了
+    /// </summary>
+    private bool _isGameStop; // TODO：ここは一旦仮で作ってるから後でゲームマネージャーに移す
+    /// <summary>
+    /// 勝利した石の色
+    /// </summary>
+    private StoneColor _winnerStone;
     
     
-    // TODO：パスの判定は大丈夫だが、パスになった後に棋譜を戻すとエラーになる
-    // TODO：AIの実装
+    // TODO：パスになった後に棋譜を戻すとエラーになる
     // TODO：勝敗
-    
 
-    private void Awake()
+    
+    private void Start()
     {
         _boardRenderers = new Renderer[_rows, _columns];
         _stones = new GameObject[_rows, _columns];
@@ -68,8 +77,26 @@ public class BoardManager : MonoBehaviour
         
         BoardInitialization();
         StoneInitialization();
-        
         CanPutBoardUpdate();
+    }
+
+    private void Update()
+    {
+        if(_isGameStop) return;
+        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White)
+        {
+            if (IsAllFullStone())
+            {
+                Debug.LogWarning("盤面が全て埋まりました");
+                _isGameStop = true;
+                return;
+            }
+            
+            Debug.Log("AIが置く");
+            _othelloAI.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
+            _gameTurnManager.ChangeCurrentTurnStoneColor();
+            CanPutBoardUpdate();
+        }
     }
 
     /// <summary>
@@ -119,6 +146,10 @@ public class BoardManager : MonoBehaviour
         StoneGenerate(3, 4, StoneColor.Black);
         StoneGenerate(4, 3, StoneColor.Black);
         StoneGenerate(4, 4, StoneColor.White);
+
+        var black = 2;
+        var white = 2;
+        ScoreBoardUIManager.Instance.SetStoneCount(black, white);
     }
     
     /// <summary>
@@ -167,6 +198,43 @@ public class BoardManager : MonoBehaviour
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// 盤面が全て埋まってるか判定する
+    /// </summary>
+    /// <returns>true：埋まっている　false：埋まっていない</returns>
+    private bool IsAllFullStone()
+    {
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                if (_massData[i, j].StoneColor == StoneColor.None) return false;
+            }
+        }
+        
+        return true;
+    }
+
+    /// <summary>
+    /// 石の個数を更新
+    /// </summary>
+    private void UpdateStoneCount()
+    {
+        var black = 0;
+        var white = 0;
+
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                if (_massData[i, j].StoneColor == StoneColor.Black) black++;
+                else if (_massData[i, j].StoneColor == StoneColor.White) white++;
+            }
+        }
+        
+        ScoreBoardUIManager.Instance.SetStoneCount(black, white);
     }
 
     /// <summary>
@@ -219,11 +287,14 @@ public class BoardManager : MonoBehaviour
         
         // 挟まれた石をめくる
         FlipStone(row, column);
+        // 石の個数を更新
+        UpdateStoneCount();
         
         // 途中勝利の判定を行う
-        if (IsMidwayVictory())
+        if (IsMidwayVictory(out _winnerStone))
         {
             Debug.LogWarning($"途中勝利した手番：{_gameTurnManager.CurrentTurnStoneColor}");
+            _isGameStop = true;
         }
 
         return true;
@@ -241,8 +312,6 @@ public class BoardManager : MonoBehaviour
         Destroy(_stones[row, column]);
         _stones[row, column] = null;
         
-        // 最後に行った手
-        var last = _putBoardHistory[^1];
         // 前の手番の石
         var previousColor = _gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ?
             StoneColor.White : StoneColor.Black;
@@ -299,73 +368,76 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     public void CanPutBoardUpdate()
     {
-        _canPutBoardPositions.Clear();
-
-        for (int i = 0; i < _rows; i++)
+        while (true)
         {
-            for (int j = 0; j < _columns; j++)
-            {
-                // 置かれている場合、処理を行わない
-                if (_massData[i, j].StoneColor != StoneColor.None) continue;
+            _canPutBoardPositions.Clear();
 
-                // 手番の石を置いたとき、めくれる石を取得
-                var flipPositions = CheckSurroundingStone(i, j, _gameTurnManager.CurrentTurnStoneColor);
-                if (flipPositions.Count > 0)
-                {
-                    _passCount = 0;
-                    // 置ける位置とめくれる石位置の石を保持
-                    var canPut = new CanPutBoardPositions((i, j));
-                    foreach (var flipPosition in flipPositions)
-                    {
-                        canPut.AddFlipPosition(flipPosition.row, flipPosition.col);
-                    }
-                    
-                    _canPutBoardPositions.Add(canPut);
-                    _boardRenderers[i, j].material = _canPutMaterial;
-                }
-                else
+            // 盤面が全て埋まっているか、黒と白のどちらかが全滅していたら終了
+            if (IsAllFullStone() || IsMidwayVictory(out _winnerStone))
+            {
+                _isGameStop = true;
+                CheckGameResult();
+                return;
+            }
+
+            for (int i = 0; i < _rows; i++)
+            {
+                for (int j = 0; j < _columns; j++)
                 {
                     _boardRenderers[i, j].material = _normalMaterial;
+                    
+                    if(_massData[i, j].StoneColor != StoneColor.None) continue;
+
+                    // 現在の手番で置ける位置を全て取得する
+                    var flipPositions = CheckSurroundingStone(_massData, i, j, _gameTurnManager.CurrentTurnStoneColor);
+                    if (flipPositions.Count > 0)
+                    {
+                        // 置ける位置とめくれる石位置の石を保持
+                        var canPut = new CanPutBoardPositions((i, j));
+                        foreach (var flipPosition in flipPositions)
+                        {
+                            canPut.AddFlipPosition(flipPosition.row, flipPosition.col);
+                        }
+                    
+                        _canPutBoardPositions.Add(canPut);
+                        _boardRenderers[i, j].material = _canPutMaterial;
+                    }
                 }
             }
-        }
-        
-        // パスかどうか判定する
-        IsPassCheck();
-    }
 
-    /// <summary>
-    /// パスかどうか判定を行う
-    /// ・まだパスが2回でないなら、手番を切り替えて盤面を更新
-    /// ・パスが2回になったら、引き分けにする
-    /// </summary>
-    private void IsPassCheck()
-    {
-        if (_canPutBoardPositions.Count == 0)
-        {
-            _passCount++;
-            if (_passCount == 2)
+            // 置ける場所があれば、処理を終了
+            if (_canPutBoardPositions.Count > 0)
             {
-                Debug.LogWarning("引き分けになりました。");
+                _passCount = 0;
                 return;
             }
             
-            // 手番を切り替えて盤面を更新
+            // パスの処理
+            _passCount++;
+            _putBoardHistory.Add(null);
+            Debug.LogWarning($"パスを行いました。{_gameTurnManager.CurrentTurnStoneColor}はパス。{_passCount}");
+
+            if (_passCount >= 2)
+            {
+                Debug.LogWarning("パスが２回行われたので、ゲームを終了");
+                _isGameStop = true;
+                return;
+            }
+            
+            // 手番を交代
             _gameTurnManager.ChangeCurrentTurnStoneColor();
-            CanPutBoardUpdate();
         }
-        
-        _passCount = 0;
     }
 
     /// <summary>
     /// 周辺８方向で手番のじゃない石を挟めるか調べる
     /// </summary>
+    /// <param name="massData">調べる盤面</param>
     /// <param name="row">石を置く行</param>
     /// <param name="column">石を置く列</param>
     /// <param name="currentStoneColor">手番の石の色</param>
     /// <returns>true：置くことができる　false：置くことができない</returns>
-    private List<(int row, int col)> CheckSurroundingStone(int row, int column, StoneColor currentStoneColor)
+    private List<(int row, int col)> CheckSurroundingStone(MassData[,] massData, int row, int column, StoneColor currentStoneColor)
     {
         var flipPositions = new List<(int, int)>();
 
@@ -378,12 +450,12 @@ public class BoardManager : MonoBehaviour
             // 範囲外
             if(!IsWithinRange(dirX, dirY)) continue;
             // 石が置かれていない
-            if(_massData[dirX, dirY].StoneColor == StoneColor.None) continue;
+            if(massData[dirX, dirY].StoneColor == StoneColor.None) continue;
             // 調べた石と同じ色
-            if(_massData[dirX, dirY].StoneColor == currentStoneColor) continue;
+            if(massData[dirX, dirY].StoneColor == currentStoneColor) continue;
 
             // めくれる石を取得
-            var pos = ContinuedStone(dirX, dirY, _surroundings[i, 0], _surroundings[i, 1], currentStoneColor);
+            var pos = ContinuedStone(massData, dirX, dirY, _surroundings[i, 0], _surroundings[i, 1], currentStoneColor);
             flipPositions.AddRange(pos);
         }
 
@@ -393,13 +465,14 @@ public class BoardManager : MonoBehaviour
     /// <summary>
     /// 移動先に手番の石の色が続いているのかを調べる
     /// </summary>
+    /// <param name="massData">調べる盤面</param>
     /// <param name="searchX">調べる石のXの位置</param>
     /// <param name="searchY">調べる石のYの位置</param>
     /// <param name="dirX">Xの移動方向</param>
     /// <param name="dirY">Yの移動方向</param>
     /// <param name="color">手番の石の色</param>
     /// <returns>true：続いている　false：続いていない</returns>
-    private List<(int row, int col)> ContinuedStone(int searchX, int searchY, int dirX, int dirY, StoneColor color)
+    private List<(int row, int col)> ContinuedStone(MassData[,] massData, int searchX, int searchY, int dirX, int dirY, StoneColor color)
     {
         var check = new List<(int, int)>();
 
@@ -409,7 +482,7 @@ public class BoardManager : MonoBehaviour
         while (true)
         {
             // 現在のマス
-            var current = _massData[x, y];
+            var current = massData[x, y];
 
             // 置いた石に到達
             if (current.StoneColor == color) return check;
@@ -430,23 +503,134 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
-    /// 途中勝利かを返す
+    /// ゲーム終了時の勝敗結果を判定する
     /// </summary>
-    /// <returns>true：途中勝利　false：途中勝利じゃない</returns>
-    public bool IsMidwayVictory()
+    private void CheckGameResult()
     {
-        // 1個でも手番以外の石が存在しているかを判定する
+        var black = 0;
+        var white = 0;
+
         for (int i = 0; i < _rows; i++)
         {
             for (int j = 0; j < _columns; j++)
             {
-                if(_massData[i, j].StoneColor == StoneColor.None) continue;
+                if(_massData[i, j].StoneColor == StoneColor.Black) black++;
+                else if(_massData[i, j].StoneColor == StoneColor.White) white++;
+            }
+        }
+
+        if (black > white) // 黒の勝利
+        {
+            Debug.LogWarning("黒の勝利");
+            _winnerStone = StoneColor.Black;
+        }
+        else if (white > black) // 白の勝利
+        {
+            Debug.LogWarning("白の勝利");
+            _winnerStone = StoneColor.White;
+        }
+        
+        // 引き分け
+        _winnerStone = StoneColor.None;
+    }
+
+    /// <summary>
+    /// 途中勝利が発生しているか判定し、勝者を決める
+    /// </summary>
+    /// <param name="winner">勝利した石の色</param>
+    /// <returns>true：途中勝利　false：途中勝利ではない</returns>
+    private bool IsMidwayVictory(out StoneColor winner)
+    {
+        winner = StoneColor.None;
+        var black = false;
+        var white = false;
+
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                if (_massData[i, j].StoneColor == StoneColor.Black) black = true;
+                else if (_massData[i, j].StoneColor == StoneColor.White) white = true;
+            }
+        }
+
+        // 両方の石が存在している
+        if (black && white) return false;
+
+        if (black) // 黒の勝利
+        {
+            winner = StoneColor.Black;
+            return true;
+        }
+
+        if (white) // 白の勝利
+        {
+            winner = StoneColor.White;
+            return true;
+        }
+
+        return false;
+    }
+
+    public List<CanPutBoardPositions> GetCanPutBoardPositions(MassData[,] massData, StoneColor stoneColor)
+    {
+        var canPutBoardPositions = new List<CanPutBoardPositions>();
+
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                // 置かれている場合、処理を行わない
+                if (massData[i, j].StoneColor != StoneColor.None) continue;
+
+                // 手番の石を置いたとき、めくれる石を取得
+                var flipPositions = CheckSurroundingStone(massData, i, j, stoneColor);
+                if(flipPositions.Count == 0) continue;
                 
-                if(_massData[i, j].StoneColor != _gameTurnManager.CurrentTurnStoneColor) return false;
+                var canPut = new CanPutBoardPositions((i, j));
+                foreach (var flipPosition in flipPositions)
+                {
+                    canPut.AddFlipPosition(flipPosition.row, flipPosition.col);
+                }
+                canPutBoardPositions.Add(canPut);
             }
         }
         
-        return true;
+        return canPutBoardPositions;
+    }
+
+    /// <summary>
+    /// 盤面のコピーを取得する
+    /// </summary>
+    /// <returns>盤面のコピーデータ</returns>
+    public MassData[,] CopyBoard(MassData[,] massData)
+    {
+        var copy = new MassData[_rows, _columns];
+
+        for (int i = 0; i < _rows; i++)
+        {
+            for (int j = 0; j < _columns; j++)
+            {
+                var original = massData[i, j];
+                copy[i, j] = new MassData(original.StoneColor, original.Record);
+            }
+        }
+        
+        return copy;
+    }
+
+    public MassData[,] PutStoneTemporarily(MassData[,] massData, int row, int column, StoneColor stoneColor)
+    {
+        // 石を置く
+        massData[row, column].StoneColor = stoneColor;
+        // 石をめくる
+        var flipPositions = CheckSurroundingStone(massData, row, column, stoneColor);
+        foreach (var flipPosition in flipPositions)
+        {
+            massData[flipPosition.row, flipPosition.col].StoneColor = stoneColor;
+        }
+        
+        return massData;
     }
 }
 

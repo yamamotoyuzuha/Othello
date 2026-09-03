@@ -1843,7 +1843,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameRecordManager
   _boardManager: {fileID: 379946999}
   _gameTurnManager: {fileID: 183648889}
-  _gameRecordData: f5f4c3f6g7f7f3h7f8b2h6e7h8e3d7g3f2f1a1c5
+  _gameRecordData: F5D6C5F4E7F6G5E6E3
 --- !u!4 &1200988066
 Transform:
   m_ObjectHideFlags: 0
