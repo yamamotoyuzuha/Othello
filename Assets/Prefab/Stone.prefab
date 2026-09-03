@@ -9,6 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 726635878142777181}
+  - component: {fileID: 6232043625337036035}
+  - component: {fileID: 4367520957826536486}
   m_Layer: 0
   m_Name: Stone
   m_TagString: Untagged
@@ -33,6 +35,43 @@ Transform:
   - {fileID: 7435034912656480326}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!95 &6232043625337036035
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113119932161040338}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 5dbc4bef6fd71aa4fa1d10e72ac49ff9, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &4367520957826536486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1113119932161040338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b493963afa6a8944f87c280e0e6ab54d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::OthelloAnimation
+  _triggerNameBlack: Black
+  _triggerNameWhite: White
+  _blendTreeName: Table
 --- !u!1 &3046214197468593969
 GameObject:
   m_ObjectHideFlags: 0

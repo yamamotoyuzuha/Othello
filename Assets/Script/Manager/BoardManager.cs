@@ -26,6 +26,8 @@ public class BoardManager : MonoBehaviour
     /// 各マスの石
     /// </summary>
     private GameObject[,] _stones;
+
+    private OthelloAnimation[,] _othelloAnimations;
     /// <summary>
     /// 各マス目の情報
     /// </summary>
@@ -70,6 +72,8 @@ public class BoardManager : MonoBehaviour
         _boardRenderers = new Renderer[_rows, _columns];
         _stones = new GameObject[_rows, _columns];
         _massData = new MassData[_rows, _columns];
+        
+        _othelloAnimations = new  OthelloAnimation[_rows, _columns];
         
         BoardInitialization();
         StoneInitialization();
@@ -158,7 +162,9 @@ public class BoardManager : MonoBehaviour
         stone.transform.position = pos;
         
         // 白の場合、石を回転させて反転させる
-        if(color == StoneColor.White) stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
+        //if(color == StoneColor.White) stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
+        
+        
     }
 
     /// <summary>
