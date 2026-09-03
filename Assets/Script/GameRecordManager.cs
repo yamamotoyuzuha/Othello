@@ -71,20 +71,13 @@ public class GameRecordManager : MonoBehaviour
 
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             _currentGameRecord++;
+            _boardManager.CanPutBoardUpdate();
         }
         else
         {
             if(_currentGameRecord <= 0) return;
-            var record = _gameRecordInput[_currentGameRecord - 1];
-            // 棋譜を配列の座標に変換する
-            var row = record[1] - '1';
-            var col = record[0] - 'A';
-            
-            _gameTurnManager.ChangeCurrentTurnStoneColor();
-            _boardManager.UndoPutStone(row, col);
             _currentGameRecord--;
+            _boardManager.UndoPutStone();
         }
-        
-        _boardManager.CanPutBoardUpdate();
     }
 }
