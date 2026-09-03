@@ -1271,7 +1271,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   _isUseAI: 1
-  _isRecord: 1
+  _isRecord: 0
 --- !u!4 &486858746
 Transform:
   m_ObjectHideFlags: 0

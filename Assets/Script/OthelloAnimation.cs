@@ -17,11 +17,11 @@ public class OthelloAnimation : MonoBehaviour
     {
         if (stoneColor == StoneColor.Black)
         {
-            _animator.SetFloat(_blendTreeName, 0);
+            _animator.SetFloat(_blendTreeName, 1);
         }
         else if (stoneColor == StoneColor.White)
         {
-            _animator.SetFloat(_blendTreeName, 1);
+            _animator.SetFloat(_blendTreeName, 0);
         }
     }
 
@@ -29,11 +29,11 @@ public class OthelloAnimation : MonoBehaviour
     {
         if (stoneColor == StoneColor.Black)
         {
-            _animator.SetTrigger(_triggerNameBlack);
+            _animator.SetTrigger(_triggerNameWhite);
         }
         else if (stoneColor == StoneColor.White)
         {
-            _animator.SetTrigger(_triggerNameWhite);
+            _animator.SetTrigger(_triggerNameBlack);
         }
     }
 }

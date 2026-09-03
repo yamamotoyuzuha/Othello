@@ -26,7 +26,9 @@ public class BoardManager : MonoBehaviour
     /// 各マスの石
     /// </summary>
     private GameObject[,] _stones;
-
+    /// <summary>
+    /// 石のアニメーション
+    /// </summary>
     private OthelloAnimation[,] _othelloAnimations;
     /// <summary>
     /// 各マス目の情報
@@ -161,10 +163,9 @@ public class BoardManager : MonoBehaviour
         pos.y += _stoneOffset;
         stone.transform.position = pos;
         
-        // 白の場合、石を回転させて反転させる
-        //if(color == StoneColor.White) stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
-        
-        
+        // アニメーション
+        _othelloAnimations[row, column] = stone.GetComponent<OthelloAnimation>();
+        _othelloAnimations[row, column].SetIdle(color);
     }
 
     /// <summary>
@@ -272,14 +273,13 @@ public class BoardManager : MonoBehaviour
         // 石の生成を行う
         var stone = Instantiate(_stonePrefab, _stoneParent);
         _stones[row, column] = stone;
+        // アニメーション
+        _othelloAnimations[row, column] = stone.GetComponent<OthelloAnimation>();
+        _othelloAnimations[row, column].SetIdle(_gameTurnManager.CurrentTurnStoneColor);
         // 石の位置設定
         var pos = _stoneTransforms[row]._transforms[column].position;
         pos.y += _stoneOffset;
         stone.transform.position = pos;
-            
-        // 白の場合、石を回転させて反転させる
-        if(_gameTurnManager.CurrentTurnStoneColor == StoneColor.White) 
-            stone.transform.rotation = Quaternion.Euler(new Vector3(180, 0, 0));
         
         // 挟まれた石をめくる
         FlipStone(row, column);
@@ -336,8 +336,8 @@ public class BoardManager : MonoBehaviour
             var flipCol = position.column;
             // 石の情報等を元に戻す
             _massData[flipRow, flipCol].StoneColor = previousColor;
-            _stones[flipRow, flipCol].transform.rotation = 
-                Quaternion.Euler(previousColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
+            // アニメーション
+            _othelloAnimations[flipRow, flipCol].AnimationPlay(previousColor);
         }
         
         _putBoardHistory.RemoveAt(lastIndex);
@@ -369,9 +369,8 @@ public class BoardManager : MonoBehaviour
                 
                 // 盤面の情報を変更
                 _massData[flipRow, flipCol].StoneColor = _gameTurnManager.CurrentTurnStoneColor;
-                // 表示されている石の向きを変更
-                _stones[flipRow, flipCol].transform.rotation = 
-                    Quaternion.Euler(_gameTurnManager.CurrentTurnStoneColor == StoneColor.Black ? new Vector3(0, 0, 0) : new Vector3(180, 0, 0));
+                // アニメーション
+                _othelloAnimations[flipRow, flipCol].AnimationPlay(_gameTurnManager.CurrentTurnStoneColor);
             }
             
             _putBoardHistory.Add(putData);
