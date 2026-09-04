@@ -13,11 +13,7 @@ public class GameRecordManager : MonoBehaviour
     /// <summary>
     /// 棋譜の入力
     /// </summary>
-    private readonly List<string> _gameRecordInput = new List<string>();
-    /// <summary>
-    /// 棋譜の出力
-    /// </summary>
-    private readonly List<string> _gameRecordOutput = new List<string>();
+    private readonly List<string> _gameRecordInput = new ();
     /// <summary>
     /// 現在の棋譜
     /// </summary>

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+/// <summary>
+/// 石のアニメーション
+/// </summary>
 public class OthelloAnimation : MonoBehaviour
 {
     [Header("黒"), SerializeField] private string _triggerNameBlack;
