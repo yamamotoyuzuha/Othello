@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -56,6 +57,10 @@ public class BoardManager : MonoBehaviour
     private readonly int _rows = 8;
     private readonly int _columns = 8;
     /// <summary>
+    /// AIの待機時間
+    /// </summary>
+    private readonly float _aiThinkingTime = 2f;
+    /// <summary>
     /// パスした回数
     /// </summary>
     private int _passCount;
@@ -63,6 +68,11 @@ public class BoardManager : MonoBehaviour
     /// 対戦中のAI
     /// </summary>
     private AI _ai;
+    /// <summary>
+    /// AIを実行したか
+    /// true：実行中　false：実行中でない
+    /// </summary>
+    private bool _isAIThinking;
     #region 現在の選択中のマス
     private int _currentRow;
     private int _currentColumn;
@@ -88,17 +98,29 @@ public class BoardManager : MonoBehaviour
     private void Update()
     {
         if(GameManager.Instance.IsGameEnd || GameManager.Instance.IsRecord) return;
-        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && GameManager.Instance.IsUseAI)
+        if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && GameManager.Instance.IsUseAI && !_isAIThinking)
         {
-            // TODO：ここに待機を入れる
-            
-            _ai.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
-            
-            // 手番の変更と盤面更新
-            _gameTurnManager.ChangeCurrentTurnStoneColor();
-            CanPutBoardUpdate();
-            SelectBoardColor(_currentRow, _currentColumn);
+            StartCoroutine(AI());
         }
+    }
+
+    /// <summary>
+    /// AI
+    /// </summary>
+    IEnumerator　AI()
+    {
+        _isAIThinking = true;
+        
+        yield return new WaitForSeconds(_aiThinkingTime);
+        
+        // AIの実行
+        _ai.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
+        // 手番の変更と盤面更新
+        _gameTurnManager.ChangeCurrentTurnStoneColor();
+        CanPutBoardUpdate();
+        SelectBoardColor(_currentRow, _currentColumn);
+
+        _isAIThinking = false;
     }
 
     /// <summary>
