@@ -13,6 +13,10 @@ public class OthelloAnimation : MonoBehaviour
         _animator = GetComponent<Animator>();
     }
 
+    /// <summary>
+    /// 待機アニメーションを再生
+    /// </summary>
+    /// <param name="stoneColor">石の色</param>
     public void SetIdle(StoneColor stoneColor)
     {
         if (stoneColor == StoneColor.Black)
@@ -25,6 +29,10 @@ public class OthelloAnimation : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// めくるアニメーションを再生
+    /// </summary>
+    /// <param name="stoneColor">石の色</param>
     public void AnimationPlay(StoneColor stoneColor)
     {
         if (stoneColor == StoneColor.Black)

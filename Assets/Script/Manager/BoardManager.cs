@@ -63,6 +63,10 @@ public class BoardManager : MonoBehaviour
     /// 対戦中のAI
     /// </summary>
     private AI _ai;
+    #region 現在の選択中のマス
+    private int _currentRow;
+    private int _currentColumn;
+    #endregion
 
     private void Awake()
     {
@@ -73,9 +77,8 @@ public class BoardManager : MonoBehaviour
     {
         _boardRenderers = new Renderer[_rows, _columns];
         _stones = new GameObject[_rows, _columns];
-        _massData = new MassData[_rows, _columns];
-        
         _othelloAnimations = new  OthelloAnimation[_rows, _columns];
+        _massData = new MassData[_rows, _columns];
         
         BoardInitialization();
         StoneInitialization();
@@ -87,11 +90,14 @@ public class BoardManager : MonoBehaviour
         if(GameManager.Instance.IsGameEnd || GameManager.Instance.IsRecord) return;
         if (_gameTurnManager.CurrentTurnStoneColor == StoneColor.White && GameManager.Instance.IsUseAI)
         {
+            // TODO：ここに待機を入れる
+            
             _ai.ThinkingAI(_massData, _gameTurnManager.CurrentTurnStoneColor);
             
             // 手番の変更と盤面更新
             _gameTurnManager.ChangeCurrentTurnStoneColor();
             CanPutBoardUpdate();
+            SelectBoardColor(_currentRow, _currentColumn);
         }
     }
 
@@ -242,6 +248,8 @@ public class BoardManager : MonoBehaviour
     public void SelectBoardColor(int currentRow, int currentColumn)
     {
         _boardRenderers[currentRow, currentColumn].material = _selectMaterial;
+        _currentRow = currentRow;
+        _currentColumn = currentColumn;
     }
 
     /// <summary>
@@ -588,6 +596,12 @@ public class BoardManager : MonoBehaviour
         return false;
     }
 
+    /// <summary>
+    /// 置くことができる場所を取得する
+    /// </summary>
+    /// <param name="massData">判定を行う盤面</param>
+    /// <param name="stoneColor">判定を行う石の色</param>
+    /// <returns>置くことができる場所</returns>
     public List<CanPutBoardPositions> GetCanPutBoardPositions(MassData[,] massData, StoneColor stoneColor)
     {
         var canPutBoardPositions = new List<CanPutBoardPositions>();
@@ -635,6 +649,14 @@ public class BoardManager : MonoBehaviour
         return copy;
     }
 
+    /// <summary>
+    /// 石を仮で置く
+    /// </summary>
+    /// <param name="massData">置く盤面</param>
+    /// <param name="row">行</param>
+    /// <param name="column">列</param>
+    /// <param name="stoneColor">置く石の色</param>
+    /// <returns>置いた後の盤面</returns>
     public MassData[,] PutStoneTemporarily(MassData[,] massData, int row, int column, StoneColor stoneColor)
     {
         // 石を置く

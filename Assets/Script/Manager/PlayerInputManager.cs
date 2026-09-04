@@ -11,9 +11,6 @@ public class PlayerInputManager : MonoBehaviour
     [Header("カーソル初期位置")]
     [SerializeField] private int _currentRow;
     [SerializeField] private int _currentColumn;
-    
-    public int CurrentRow => _currentRow;
-    public int CurrentColumn => _currentColumn;
 
     private void Start()
     {
